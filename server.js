@@ -1,51 +1,62 @@
 const express = require("express");
-const { Pool } = require("pg");
-const cors = require("cors");   
-require("dotenv").config();
+const cors = require("cors");
+const mysql = require("mysql2");
 
 const app = express();
 
-
 app.use(cors());
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
+/* DATABASE CONNECTION */
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: 5432,
+const db = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "root", // your MySQL password
+    database: "portfolio"
 });
 
-
-pool.query("SELECT NOW()", (err, res) => {
-  if (err) console.error("PostgreSQL connection error ", err);
-  else console.log("PostgreSQL connected  at", res.rows[0].now);
+db.connect((err) => {
+    if (err) {
+        console.log("❌ Database connection failed:", err);
+    } else {
+        console.log("✅ Connected to MySQL database");
+    }
 });
 
+/* TEST ROUTE */
 
 app.get("/", (req, res) => {
-  res.send("Backend running ");
+    res.send("Backend is running 🚀");
 });
 
-app.post("/contact", async (req, res) => {
-  const { name, email, message } = req.body;
-  if (!name || !email) return res.status(400).send("Name and email are required");
+/* CONTACT ROUTE */
 
-  try {
-    const result = await pool.query(
-      "INSERT INTO messages(name, email, message) VALUES($1, $2, $3) RETURNING *",
-      [name, email, message]
-    );
-    res.status(201).json({ message: "Message saved!", data: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
+app.post("/contact", (req, res) => {
+
+    console.log("📨 Incoming form data:", req.body);
+
+    const { name, email, message } = req.body;
+
+    const sql = "INSERT INTO messages (name, email, message) VALUES (?, ?, ?)";
+
+    db.query(sql, [name, email, message], (err, result) => {
+
+        if (err) {
+            console.log("❌ MYSQL ERROR:", err);
+            return res.status(500).json({ message: "Database error" });
+        }
+
+        console.log("✅ Data inserted successfully");
+
+        res.json({ message: "Message saved successfully" });
+
+    });
+
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+/* SERVER */
+
+app.listen(5000, () => {
+    console.log("🚀 Server running on http://localhost:5000");
+});
