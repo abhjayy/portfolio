@@ -11,7 +11,7 @@ form.addEventListener("submit", async (e) => {
 
     try {
 
-        const response = await fetch("http://localhost:5000/contact", {
+        const response = await fetch("https://backend-jv34.onrender.com/contact", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -26,7 +26,7 @@ form.addEventListener("submit", async (e) => {
     } catch (error) {
 
         console.log(error);
-        alert("Server error");
+        alert("Server error ❌");
 
     }
 });
